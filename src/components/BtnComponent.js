@@ -13,7 +13,7 @@ function BtnComponent(props) {
           onClick={props.reset}>Stop</button> 
 
           <button className="stopwatch-btn stopwatch-btn-yel"
-          onDoubleClick={props.wait}>Wait</button> 
+          onDoubleClick={props.stop}>Wait</button> 
         </div> : ""
       }
 

@@ -1,67 +1,72 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
+import {interval, Subject} from "rxjs";
+import { takeUntil } from 'rxjs';
+
 import DisplayComponent from './components/DisplayComponent';
 import BtnComponent from './components/BtnComponent';
 import './App.css';
 
 function App() {
-  const [time, setTime] = useState({ms:0, s:0, m:0, h:0});
-  const [interv, setInterv] = useState();
+
+  const [time, setTime] = useState(0);
+  const [watchOn, setWatchOn] = useState(false);
   const [status, setStatus] = useState(0);
 
+  useEffect(() => {
+
+    const unsubscribe = new Subject();
+    interval(10).pipe(takeUntil(unsubscribe)).subscribe(() => {
+          if (watchOn) {
+            setTime(val => val + 1);
+          }
+        });
+    return () => {
+      unsubscribe.next();
+      unsubscribe.complete();
+    };
+  }, [watchOn]);
+
+
   const start = () => {
-    run();
-    setStatus(1)
-    setInterv(setInterval(run, 10));
+    setWatchOn(prevState => !prevState);
+    setStatus(1);
   }
 
-  var updatedMs = time.ms, updatedS = time.s, updatedM = time.m, updatedH = time.h;
 
-  const run = () => {
-    if(updatedM === 60){
-      updatedH++;
-      updatedM = 0;
-    }
-    if(updatedS === 60){
-      updatedM++;
-      updatedS = 0;
-    }
-    if(updatedMs === 60){
-      updatedS++;
-      updatedMs = 0;
-    }
-    updatedMs++
-    return setTime({s:updatedS, m:updatedM, h:updatedH});
-  };
+  const resume = () => {
+    start();
+  }
+
 
   const stop = () => {
-    clearInterval(interv);
-    setStatus(0);
-    setTime({ms:0, s:0, m:0, h:0})
-  };
-
-  const wait = () => {
-    clearInterval(interv);
+    if (time !== 0) {
+      setWatchOn(false);
+    }
     setStatus(2);
   }
 
-  const reset = () => {
-    clearInterval(interv);
-    setStatus(0);
-    setTime({ms:0, s:0, m:0, h:0})
-  };
 
-  const resume = () => start();
+  const reset = () => {
+    setTime(0);
+    setWatchOn(false);
+    setStatus(0);
+  }
 
   return (
     <div className="main-section">
       <div className="clock-holder">
         <div className="stopwatch">
           <DisplayComponent time = {time}/>
-          <BtnComponent wait = {wait} resume = {resume} status = {status} stop = {stop} reset = {reset} start = {start}/>
+          <BtnComponent start = {start}
+                        stop = {stop}
+                        reset = {reset}
+                        resume = {resume}
+                        status = {status}/>
         </div>
       </div>
     </div>
   );
 }
+
 
 export default App;
